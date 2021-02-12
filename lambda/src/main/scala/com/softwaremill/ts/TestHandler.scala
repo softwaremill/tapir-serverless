@@ -2,10 +2,10 @@ package com.softwaremill.ts
 
 import com.amazonaws.services.lambda.runtime.{Context, RequestStreamHandler}
 
-import java.io.{BufferedWriter, InputStream, OutputStream, OutputStreamWriter, PrintWriter}
+import java.io.{BufferedWriter, InputStream, OutputStream, OutputStreamWriter}
 import scala.jdk.CollectionConverters.MapHasAsScala
 
-class MyHandler extends RequestStreamHandler {
+class TestHandler extends RequestStreamHandler {
   var local = 0
 
   override def handleRequest(input: InputStream, output: OutputStream, context: Context): Unit = {
@@ -18,13 +18,9 @@ class MyHandler extends RequestStreamHandler {
     logger.log("JSON: " + json + "\n")
 
 //    logger.log("EVENT CLASS: " + event.getClass.getName + "\n")
-//    logger.log("AAA1: " + event.asInstanceOf[java.util.LinkedHashMap[String, Any]].get("headers") + "\n")
-//    logger.log("AAA2: " + clsOrNull(event.asInstanceOf[java.util.LinkedHashMap[String, Any]].get("headers")) + "\n")
-//    logger.log("BBB1: " + event.asInstanceOf[java.util.LinkedHashMap[String, Any]].get("requestContext") + "\n")
-//    logger.log("BBB2: " + clsOrNull(event.asInstanceOf[java.util.LinkedHashMap[String, Any]].get("requestContext")) + "\n")
     local += 1
-    MyHandler.global += 1
-    val result = s""""200 OK Local: $local global: ${MyHandler.global}""""
+    TestHandler.global += 1
+    val result = s""""200 OK Local: $local global: ${TestHandler.global}""""
 
     val writer = new BufferedWriter(new OutputStreamWriter(output, "UTF-8"))
     writer.write(result)
@@ -34,6 +30,6 @@ class MyHandler extends RequestStreamHandler {
   def clsOrNull(x: Any): String = if (x == null) "null" else x.getClass.getName
 }
 
-object MyHandler {
+object TestHandler {
   var global = 0
 }

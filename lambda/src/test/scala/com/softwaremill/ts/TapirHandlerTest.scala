@@ -2,6 +2,8 @@ package com.softwaremill.ts
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import sttp.tapir._
+import sttp.tapir.server.ServerEndpoint
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
@@ -9,7 +11,7 @@ class TapirHandlerTest extends AnyFlatSpec with Matchers {
   val testRequest: String = """{
                               |    "version": "2.0",
                               |    "routeKey": "POST /pets/add/{petId}",
-                              |    "rawPath": "/pets/add/xxx",
+                              |    "rawPath": "/pets/add/cat01",
                               |    "rawQueryString": "a=123",
                               |    "headers": {
                               |        "accept": "*/*",
@@ -32,7 +34,7 @@ class TapirHandlerTest extends AnyFlatSpec with Matchers {
                               |        "domainPrefix": "9abc9",
                               |        "http": {
                               |            "method": "POST",
-                              |            "path": "/pets/add/xxx",
+                              |            "path": "/pets/add/cat01",
                               |            "protocol": "HTTP/1.1",
                               |            "sourceIp": "78.11.177.136",
                               |            "userAgent": "curl/7.64.1"
@@ -44,7 +46,7 @@ class TapirHandlerTest extends AnyFlatSpec with Matchers {
                               |        "timeEpoch": 1613040921706
                               |    },
                               |    "pathParameters": {
-                              |        "petId": "xxx"
+                              |        "petId": "cat01"
                               |    },
                               |    "body": "OTg3",
                               |    "isBase64Encoded": true
@@ -52,7 +54,23 @@ class TapirHandlerTest extends AnyFlatSpec with Matchers {
 
   it should "work" in {
     val output = new ByteArrayOutputStream()
-    new TapirHandler().handleRequest(new ByteArrayInputStream(testRequest.getBytes("UTF-8")), output, null)
-    println(new String(output.toByteArray, "UTF-8"))
+    new TapirHandler() {
+      override def endpoints: List[ServerEndpoint[_, _, _, Any, Identity]] = List(
+        endpoint.get
+          .in("pets" / path[String]("petId"))
+          .in(query[Int]("limit"))
+          .out(stringBody)
+          .serverLogic[Identity](_ => Right("ok1")),
+        endpoint.post
+          .in("pets" / "add" / path[String]("petId"))
+          .errorOut(stringBody)
+          .out(header[Int]("X-result"))
+          .serverLogic[Identity](id => Right(id.length))
+      )
+    }.handleRequest(new ByteArrayInputStream(testRequest.getBytes("UTF-8")), output, null)
+
+    val response = new String(output.toByteArray, "UTF-8")
+
+    response shouldBe """{"cookies":[],"isBase64Encoded":false,"statusCode":200,"headers":{"X-result":"5"},"body":""}"""
   }
 }

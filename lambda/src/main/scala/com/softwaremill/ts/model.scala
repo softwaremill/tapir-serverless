@@ -1,11 +1,11 @@
-package com.softwaremill.ts.model
+package com.softwaremill.ts
 
 case class AwsRequest(
     rawPath: String,
     rawQueryString: String,
     headers: Map[String, String],
     requestContext: AwsRequestContext,
-    body: String,
+    body: Option[String],
     isBase64Encoded: Boolean
 )
 case class AwsRequestContext(domainName: String, http: AwsHttp)
