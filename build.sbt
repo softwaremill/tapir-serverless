@@ -65,7 +65,8 @@ lazy val createApi: Project = (project in file("create-api"))
     libraryDependencies ++= Seq(
       "software.amazon.awssdk" % "apigatewayv2" % amazonSdkVersion,
       "software.amazon.awssdk" % "lambda" % amazonSdkVersion,
-      "software.amazon.awssdk" % "iam" % amazonSdkVersion
+      "software.amazon.awssdk" % "iam" % amazonSdkVersion,
+      "io.circe" %% "circe-yaml" % "0.13.1"
     )
   )
   .dependsOn(endpoints)
