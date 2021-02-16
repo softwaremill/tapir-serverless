@@ -15,7 +15,7 @@ lazy val loggerDependencies = Seq(
 val scalaTest = "org.scalatest" %% "scalatest" % "3.2.3" % Test
 val amazonSdkVersion = "2.15.77"
 val circeVersion = "0.13.0"
-val tapirVersion = "0.17.9"
+val tapirVersion = "0.17.11"
 
 val deploy = taskKey[Unit]("Builds and uploads a new Docker image, writes the SAM template and deploys it.")
 

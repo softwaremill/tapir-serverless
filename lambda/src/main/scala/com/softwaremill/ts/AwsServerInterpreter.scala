@@ -4,6 +4,7 @@ import sttp.model.StatusCode
 import sttp.monad.MonadError
 import sttp.tapir.internal.{NoStreams, ParamsAsAny}
 import sttp.tapir.server.internal.{
+  DecodeBody,
   DecodeInputs,
   DecodeInputsResult,
   EncodeOutputBody,
@@ -83,21 +84,9 @@ object AwsServerInterpreter {
     )
   }
 
-  private def decodeBody(req: AwsRequest, result: DecodeInputsResult): DecodeInputsResult = {
-    result match {
-      case values: DecodeInputsResult.Values =>
-        values.bodyInput match {
-          case Some(bodyInput @ EndpointIO.Body(bodyType, codec, _)) =>
-            val body = stringToRawValue(req.body.getOrElse(""), req.isBase64Encoded, bodyType)
-            codec.decode(body) match {
-              case DecodeResult.Value(bodyV)     => values.setBodyInputValue(bodyV)
-              case failure: DecodeResult.Failure => DecodeInputsResult.Failure(bodyInput, failure): DecodeInputsResult
-            }
-
-          case None => values
-        }
-      case failure: DecodeInputsResult.Failure => failure
-    }
+  private val decodeBody = new DecodeBody[AwsRequest, Identity]()(IdentityMonadError) {
+    override def rawBody[R](request: AwsRequest, body: EndpointIO.Body[R, _]): Identity[R] =
+      stringToRawValue(request.body.getOrElse(""), request.isBase64Encoded, body.bodyType)
   }
 
   private def stringToRawValue[R](
