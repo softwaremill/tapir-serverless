@@ -5,14 +5,23 @@ import io.circe.syntax._
 import SamTemplateEncoders._
 import TestEndpoints._
 
+import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Paths}
+
 object RunSamTemplateInterpreter extends App {
-  val namePrefix = if (args.length > 1) args(1) else "TestApp"
-  val imageUri = if (args.length > 2) args(2) else "eks/testApp:latest"
+  if (args.length < 2) sys.error("Usage: [app name] [image uri]")
+
+  val namePrefix = args(0)
+  val imageUri = args(1)
+  val targetFile = if (args.length > 2) Some(args(2)) else None
 
   val es = List(e0, e1, e2)
   val samTemplate = SamTemplateInterpreter(es, namePrefix, imageUri)
   val yaml = Printer(dropNullKeys = true, preserveOrder = true, stringStyle = Printer.StringStyle.Plain)
     .pretty(samTemplate.asJson)
 
-  println(yaml)
+  targetFile match {
+    case Some(path) => Files.write(Paths.get(path), yaml.getBytes(StandardCharsets.UTF_8))
+    case None       => println(yaml)
+  }
 }

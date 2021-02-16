@@ -1,4 +1,5 @@
 import com.typesafe.sbt.packager.docker.ExecCmd
+import scala.sys.process._
 
 lazy val commonSettings = commonSmlBuildSettings ++ Seq(
   organization := "com.softwaremill.ts",
@@ -16,9 +17,35 @@ val amazonSdkVersion = "2.15.77"
 val circeVersion = "0.13.0"
 val tapirVersion = "0.17.9"
 
+val deploy = taskKey[Unit]("Builds and uploads a new Docker image, writes the SAM template and deploys it.")
+
 lazy val rootProject = (project in file("."))
   .settings(commonSettings: _*)
-  .settings(publishArtifact := false, name := "tapir-serverless")
+  .settings(
+    publishArtifact := false,
+    name := "tapir-serverless",
+    deploy := Def.taskDyn {
+      val log = sLog.value
+      val appName = name.value.split("-").map(_.capitalize).mkString
+      val _ = (publish in Docker in lambda).value
+      val imageRepository = (dockerRepository in lambda).value.get
+      val imageUri = s"$imageRepository/${(packageName in Docker in lambda).value}:${(version in Docker in lambda).value}"
+      val templatePath = (baseDirectory.value / "template.yaml").toString
+      val region = "eu-central-1"
+      log.info(s"Image uri: $imageUri")
+
+      Def.task {
+        val _ = (runMain in createApi in Compile)
+          .toTask(s" com.softwaremill.ts.sam.RunSamTemplateInterpreter $appName $imageUri $templatePath")
+          .value
+        log.info(s"Wrote template to: $templatePath")
+
+        log.info("Running sam ...")
+        s"sam deploy --template-file $templatePath --stack-name $appName --image-repository $imageUri --no-confirm-changeset --capabilities CAPABILITY_IAM --region $region".!
+        ()
+      }
+    }.value
+  )
   .aggregate(endpoints, lambda, createApi)
 
 lazy val endpoints: Project = (project in file("endpoints"))
@@ -53,7 +80,8 @@ lazy val lambda: Project = (project in file("lambda"))
     },
     // https://hub.docker.com/r/amazon/aws-lambda-java
     defaultLinuxInstallLocation in Docker := "/var/task",
-    dockerRepository := Some("317104979423.dkr.ecr.eu-central-1.amazonaws.com")
+    dockerRepository := Some("317104979423.dkr.ecr.eu-central-1.amazonaws.com"),
+    version in Docker := git.gitHeadCommit.value.map(_.substring(0, 7)).getOrElse(version.value)
   )
   .dependsOn(endpoints)
   .enablePlugins(JavaAppPackaging, DockerPlugin)
