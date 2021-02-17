@@ -6,16 +6,12 @@ lazy val commonSettings = commonSmlBuildSettings ++ Seq(
   scalaVersion := "2.13.4"
 )
 
-lazy val loggerDependencies = Seq(
-  "ch.qos.logback" % "logback-classic" % "1.2.3",
-  "ch.qos.logback" % "logback-core" % "1.2.3",
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
-)
-
 val scalaTest = "org.scalatest" %% "scalatest" % "3.2.3" % Test
 val amazonSdkVersion = "2.15.77"
 val circeVersion = "0.13.0"
 val tapirVersion = "0.17.11"
+val scalaLogging = "3.9.2"
+val logback = "1.2.3"
 
 val deploy = taskKey[Unit]("Builds and uploads a new Docker image, writes the SAM template and deploys it.")
 
@@ -57,7 +53,7 @@ lazy val endpoints: Project = (project in file("endpoints"))
       "com.softwaremill.sttp.tapir" %% "tapir-json-circe" % tapirVersion,
       "io.circe" %% "circe-parser" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion
-    ) ++ loggerDependencies
+    )
   )
 
 lazy val lambda: Project = (project in file("lambda"))
@@ -66,6 +62,8 @@ lazy val lambda: Project = (project in file("lambda"))
     name := "lambda",
     libraryDependencies ++= Seq(
       "com.amazonaws" % "aws-lambda-java-runtime-interface-client" % "1.0.0",
+      "io.symphonia" % "lambda-logging" % "1.0.3",
+      "com.typesafe.scala-logging" %% "scala-logging" % scalaLogging,
       scalaTest
     ),
     packageName in Docker := "tapir-serverless",
@@ -94,7 +92,10 @@ lazy val createApi: Project = (project in file("create-api"))
       "software.amazon.awssdk" % "apigatewayv2" % amazonSdkVersion,
       "software.amazon.awssdk" % "lambda" % amazonSdkVersion,
       "software.amazon.awssdk" % "iam" % amazonSdkVersion,
-      "io.circe" %% "circe-yaml" % "0.13.1"
+      "io.circe" %% "circe-yaml" % "0.13.1",
+      "ch.qos.logback" % "logback-classic" % logback,
+      "ch.qos.logback" % "logback-core" % logback,
+      "com.typesafe.scala-logging" %% "scala-logging" % scalaLogging
     )
   )
   .dependsOn(endpoints)

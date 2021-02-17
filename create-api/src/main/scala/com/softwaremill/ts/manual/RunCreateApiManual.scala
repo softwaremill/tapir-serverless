@@ -13,7 +13,7 @@ object RunCreateApiManual extends App with StrictLogging {
   val targetLambdaFnArn = "arn:aws:lambda:eu-central-1:317104979423:function:tapir-serverless-test"
 
   import com.softwaremill.ts.TestEndpoints._
-  val es = List(e0, e1, e2)
+  val es = List(endpoint1, endpoint2, endpoint3)
   val nes = es.map(NamedEndpoint(_))
   NamedEndpoint.verifyEndpointPathsUnique(nes)
 

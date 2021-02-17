@@ -15,8 +15,8 @@ object RunSamTemplateInterpreter extends App {
   val imageUri = args(1)
   val targetFile = if (args.length > 2) Some(args(2)) else None
 
-  val es = List(e0, e1, e2)
-  val samTemplate = SamTemplateInterpreter(es, namePrefix, imageUri)
+  val endpoints = List(endpoint1, endpoint2, endpoint3)
+  val samTemplate = SamTemplateInterpreter(endpoints, namePrefix, imageUri)
   val yaml = Printer(dropNullKeys = true, preserveOrder = true, stringStyle = Printer.StringStyle.Plain)
     .pretty(samTemplate.asJson)
 
