@@ -62,6 +62,7 @@ lazy val lambda: Project = (project in file("lambda"))
     name := "lambda",
     libraryDependencies ++= Seq(
       "com.amazonaws" % "aws-lambda-java-runtime-interface-client" % "1.0.0",
+      // using https://github.com/symphoniacloud/lambda-monitoring/tree/master/lambda-logging for fast slf4j-compatible logging
       "io.symphonia" % "lambda-logging" % "1.0.3",
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLogging,
       scalaTest
