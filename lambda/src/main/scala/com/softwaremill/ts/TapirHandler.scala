@@ -16,14 +16,17 @@ trait TapirHandler extends RequestStreamHandler {
 
   override def handleRequest(input: InputStream, output: OutputStream, context: Context): Unit = {
     val json = new String(input.readAllBytes(), StandardCharsets.UTF_8)
+    val writer = new BufferedWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8))
+    writer.write(handleRequest(json))
+    writer.flush()
+  }
 
-    val resp = decode[AwsRequest](json) match {
+  def handleRequest(input: String): String = {
+    val resp = decode[AwsRequest](input) match {
       case Left(error) => AwsResponse(Nil, isBase64Encoded = false, StatusCode.BadRequest.code, Map.empty, error.getMessage)
       case Right(req)  => AwsServerInterpreter(req, endpoints)
     }
 
-    val writer = new BufferedWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8))
-    writer.write(Printer.noSpaces.print(resp.asJson))
-    writer.flush()
+    Printer.noSpaces.print(resp.asJson)
   }
 }
